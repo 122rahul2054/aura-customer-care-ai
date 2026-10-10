@@ -1,173 +1,412 @@
-# Aura Voice — Java + Spring Boot + React
+# Aura Customer Care AI
 
-A browser voice customer-support assessment project for fictional Aura Skincare. Aria answers brand questions, requests the Java `get_order_details` tool, explains eligibility and creates a transcript plus JSON outcome.
+AI customer support assistant built with Java Spring Boot and React.
 
-## Quick run with the included JAR
+A browser-based AI voice customer support assistant for the fictional brand **Aura Skincare**, built using **Java Spring Boot, React, and Gemini API**.
 
-Install Java 17 or newer. In Windows PowerShell, from the extracted project folder:
+The assistant, **Aria**, helps customers check order details, understand brand policies, and receive spoken responses. After each call, the application generates a transcript and a structured JSON summary.
 
-```powershell
-$env:GEMINI_API_KEY="your-api-key"
-java -jar release/aura-voice-1.0.0.jar
+## Features
+
+- Browser-based voice conversations.
+- Text chat as an alternative to voice input.
+- Start Call and End Call controls.
+- Listening, Thinking, and Speaking indicators.
+- AI function calling for order lookup.
+- Backend checks for cancellation and return-window eligibility.
+- Conversation context maintained during each call.
+- Visible sample orders for testing.
+- Post-call transcript and JSON summary.
+- Downloadable call results.
+- Error handling for missing orders and unavailable AI services.
+
+> This application checks order information and explains eligibility. It does not actually cancel orders, issue refunds, or arrange replacements.
+
+## Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| Backend | Java 17+, Spring Boot |
+| Frontend | React, Vite, CSS |
+| AI | Gemini API |
+| HTTP Client | Java HttpClient |
+| JSON Processing | Jackson |
+| Speech Input | Browser Speech Recognition |
+| Speech Output | Browser Speech Synthesis |
+| Order Storage | In-memory Java map |
+| Build Tools | Maven, npm |
+| Testing | JUnit, Mockito |
+| Deployment Packaging | Docker |
+
+## How It Works
+
+1. The customer starts a call and speaks into the microphone.
+2. The browser converts speech into text.
+3. React sends the message to the Spring Boot backend.
+4. Gemini processes the conversation.
+5. For order-related questions, Gemini requests the `get_order_details` tool.
+6. Java executes the lookup and returns the order information to Gemini.
+7. The generated response appears in the transcript and is spoken by the browser.
+8. When the call ends, the backend generates a structured summary.
+
+The AI requests tool execution; the Java backend performs the actual lookup.
+
+## Project Structure
+
+```text
+aura-customer-care-ai/
+├── frontend/
+│   ├── src/
+│   │   ├── main.jsx
+│   │   └── style.css
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   └── vite.config.js
+├── src/
+│   ├── main/
+│   │   ├── java/com/rahul/aura/
+│   │   │   ├── AuraApplication.java
+│   │   │   ├── ApiController.java
+│   │   │   ├── ApiErrors.java
+│   │   │   ├── AiService.java
+│   │   │   ├── CallService.java
+│   │   │   └── OrderService.java
+│   │   └── resources/
+│   │       └── application.properties
+│   └── test/
+├── .env.example
+├── .gitignore
+├── Dockerfile
+├── pom.xml
+└── README.md
 ```
 
-Then open http://localhost:8080. The included JAR already contains the frontend. The source build instructions below are for changing or rebuilding it. See VERIFICATION.md for checks performed and outstanding live tests.
+The frontend build generates `src/main/resources/static/`, which Spring Boot serves.
 
-## Start here
+## Requirements
 
-Requirements: JDK 17+, Maven 3.9+, Node.js 22+, a Gemini API key with access to the configured model, and a desktop browser supporting speech recognition and speech synthesis. Internet access is required to install dependencies and call Gemini. Browser recognition may also use an external speech service. No model training or phone number is needed.
+- Java 17 or newer
+- Maven 3.9 or newer
+- Node.js 22 or newer
+- A Gemini API key
+- Access to a Gemini model supporting:
+  - `generateContent`
+  - Function calling
+  - Structured JSON output
+- A browser supporting speech recognition and speech synthesis
+- Internet access
 
-### 1. Build the interface
+## Installation and Setup
 
-Open a terminal in this project folder:
+### 1. Clone the Repository
 
-```sh
+```bash
+git clone https://github.com/122rahul2054/aura-customer-care-ai.git
+cd aura-customer-care-ai
+```
+
+### 2. Build the Frontend
+
+```bash
 cd frontend
 npm ci
 npm run build
 cd ..
 ```
 
-The build writes React assets to `src/main/resources/static`. Spring Boot serves these at the same origin as the API.
+### 3. Configure the AI Provider
 
-### 2. Set your key and start Java
+Set the environment variables before starting the backend.
 
-Windows PowerShell:
+**Windows PowerShell:**
 
 ```powershell
-$env:GEMINI_API_KEY="your-api-key"
-$env:GEMINI_MODEL="gemini-2.5-flash"
+$env:GEMINI_API_KEY="YOUR_API_KEY"
+$env:GEMINI_MODEL="YOUR_SUPPORTED_MODEL_ID"
+```
+
+**macOS/Linux:**
+
+```bash
+export GEMINI_API_KEY="YOUR_API_KEY"
+export GEMINI_MODEL="YOUR_SUPPORTED_MODEL_ID"
+```
+
+Replace both placeholders with your actual configuration.
+
+Use only the model ID in `GEMINI_MODEL`, without a `models/` prefix.
+
+The original code defaults to `gemini-2.5-flash`. Availability must be verified for your account; override it when necessary.
+
+> Keep API keys private. Do not commit them to GitHub. Editing `.env.example` alone does not configure Spring Boot.
+
+### 4. Start the Backend
+
+```bash
 mvn spring-boot:run
 ```
 
-macOS / Linux:
+### 5. Open the Application
 
-```sh
-export GEMINI_API_KEY="your-api-key"
-export GEMINI_MODEL="gemini-2.5-flash"
-mvn spring-boot:run
+Open:
+
+```text
+http://localhost:8080
 ```
 
-Open http://localhost:8080. Allow microphone access, click Start call and ask about ORD-101. If your account does not support the default model, set GEMINI_MODEL to a model that supports generateContent, function calling and structured JSON output. Model availability and quota depend on your account. An ordinary ChatGPT subscription does not configure Gemini API access.
+Click **Start Call**, allow microphone access, and ask a question.
 
-`.env.example` documents variables; Spring Boot does NOT automatically load a `.env` file. Set environment variables in your terminal, IDE Run Configuration, hosting service, or Docker. Never put the key in React or commit it.
+Once the frontend is built, Spring Boot serves both the frontend and backend. A separate React development server is unnecessary for this setup.
 
-For frontend development, run `npm run dev` in `frontend` and keep Spring Boot on port 8080. Vite proxies `/api` to Java. Use http://localhost:5173.
+## Running in IntelliJ IDEA
 
-### 3. Test and package
+1. Open the project folder containing `pom.xml`.
+2. Allow IntelliJ to import Maven dependencies.
+3. Select Java 17 or newer as the Project SDK.
+4. Build the frontend using the commands above.
+5. Open `AuraApplication.java`.
+6. Open **Run → Edit Configurations**.
+7. Add `GEMINI_API_KEY` and `GEMINI_MODEL` under **Environment variables**.
+8. Run the application.
+9. Open `http://localhost:8080`.
 
-```sh
+Keep this configuration in `application.properties`:
+
+```properties
+aura.api-key=${GEMINI_API_KEY:}
+```
+
+Do not replace it with a real API key.
+
+## Frontend Development
+
+For frontend development with automatic refresh, keep Spring Boot running on port 8080 and run:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:5173
+```
+
+Vite forwards `/api` requests to the Spring Boot backend.
+
+## Sample Orders
+
+| Order ID | Customer | Product | Value | Status |
+|----------|----------|---------|-------|--------|
+| ORD-101 | Priya Sharma | Vitamin C Serum (30ml) | ₹699 | Out for Delivery |
+| ORD-102 | Rahul Verma | Hydrating Sunscreen SPF 50 | ₹499 | Delivered |
+| ORD-103 | Ananya Patel | Green Tea Face Wash + Toner | ₹850 | Processing |
+
+### Order Details
+
+- **ORD-101:** BlueDart, tracking number `BD-982103`, expected by 6 PM today.
+- **ORD-102:** Delhivery, tracking number `DL-441029`, delivered 14 days ago.
+- **ORD-103:** Ordered 3 hours ago and eligible for cancellation.
+
+These are fixed fictional records. Relative dates are retained from the assessment data.
+
+## Brand Policies
+
+| Topic | Policy |
+|-------|--------|
+| Shipping | Free above ₹499; ₹50 below ₹499 |
+| Delivery Time | 3–5 business days |
+| Returns | Within 7 days of delivery; unopened, unused, and in original packaging |
+| Damaged Products | Report within 48 hours with photos for replacement |
+| Cancellation | Allowed only while the order is Processing |
+| Shipped / Out for Delivery | Cannot be cancelled; customers may refuse delivery at the doorstep |
+| Cash on Delivery | Available up to ₹2,500; cash or UPI at the doorstep |
+
+The shipping charge at exactly ₹499 is unspecified in the supplied policy. The assistant is instructed to acknowledge this uncertainty.
+
+## API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/health` | Check application status and whether an API key is configured |
+| GET | `/api/orders/samples` | Retrieve sample orders |
+| POST | `/api/calls` | Start a new call |
+| POST | `/api/chat` | Process a customer message |
+| POST | `/api/calls/{id}/end` | End the call and generate its summary |
+
+### Chat Request Example
+
+```json
+{
+  "callId": "CALL_ID_RETURNED_BY_START_CALL",
+  "message": "Where is my order ORD-101?"
+}
+```
+
+### Example Call Summary
+
+```json
+{
+  "customer_intent": "ORDER_TRACKING",
+  "order_id": "ORD-101",
+  "resolution_status": "RESOLVED",
+  "call_summary": "The customer asked about ORD-101. The agent confirmed that it is out for delivery and expected by 6 PM today."
+}
+```
+
+This is an illustrative response. Actual summaries are generated from each call.
+
+## Example Questions
+
+- “Where is my order ORD-101?”
+- “What is its tracking number?”
+- “Can I return ORD-102?”
+- “Can I cancel ORD-103?”
+- “What is your return policy?”
+- “Is cash on delivery available?”
+- “Can I pay through UPI at the doorstep?”
+- “My product arrived damaged. What should I do?”
+- “Where is order ORD-999?”
+
+## Testing
+
+Run the Java tests:
+
+```bash
 mvn test
+```
+
+The initial implementation passed eight automated tests covering:
+
+- Order ID normalization.
+- Missing and unknown orders.
+- Cancellation and return-window eligibility.
+- Tool execution and preservation of model response metadata.
+- Conversation isolation.
+- Empty calls and summary failures.
+- Missing AI configuration.
+- The HTTP request contract using a local simulated provider.
+
+These tests do not verify live Gemini responses or actual microphone behaviour.
+
+### Manual Test Checklist
+
+| Test | Expected Behaviour |
+|------|--------------------|
+| Track ORD-101 | Return its courier, tracking number and delivery estimate |
+| Return ORD-102 | Explain that it is outside the 7-day return window |
+| Cancel ORD-103 | Explain eligibility without claiming cancellation occurred |
+| Cancel ORD-101 | Explain that cancellation is unavailable |
+| Ask without an order ID | Request the order ID |
+| Ask about ORD-999 | Ask the customer to verify the ID |
+| Ask an unrelated question | Redirect to Aura Skincare support |
+| Deny microphone permission | Show an understandable error |
+| End a call | Display transcript and JSON summary |
+
+## Build a Runnable JAR
+
+Build the frontend first, then run:
+
+```bash
 mvn clean package
 java -jar target/aura-voice-1.0.0.jar
 ```
 
-Build the frontend before packaging. The ZIP includes generated frontend assets for convenience; the source and lockfile are authoritative.
+The JAR includes the generated frontend assets.
 
-## Docker deployment
+## Docker
 
-The multi-stage Dockerfile builds React, runs Java tests, packages Spring Boot and runs a non-root Java 17 process:
+Create a local `.env` file using `.env.example`, then enter your configuration.
 
-```sh
-docker build -t aura-voice .
-docker run --rm -p 8080:8080 --env-file .env aura-voice
+```bash
+docker build -t aura-customer-care-ai .
+docker run --rm -p 8080:8080 --env-file .env aura-customer-care-ai
 ```
 
-For Docker only, copy `.env.example` to `.env` and fill in your key. Do not commit `.env`.
+Do not commit `.env`.
 
-To publish: push this project to your GitHub repository, create a Docker-based web service on a host supporting Java containers (the assessment lists Render, Railway and equivalents), set GEMINI_API_KEY as a secret, set GEMINI_MODEL if needed, and expose the service with HTTPS. The app uses PORT, default 8080. Use `/api/health` as its health endpoint. Verify the public URL from a different browser before submission. No hosting account or deployment has been created for you.
+The Dockerfile builds the frontend, runs Java tests and packages the application.
 
-Microphone access requires a secure browser context: localhost for development, HTTPS for a public deployment. Browser support varies; the UI detects absence of recognition and explains the limitation. Typed messages are a debugging/accessibility fallback, not a substitute for the required working voice demo. Available Indian-English voices depend on the operating system; en-IN is preferred, with English/default fallback. Refresh after configuring the backend key.
+## Deployment
 
-## Architecture
+Deploy the Docker container to a hosting service that supports Java applications.
 
-- React owns microphone recognition, speech synthesis, call controls and display.
-- ApiController exposes REST endpoints and validates message length.
-- CallService keeps independent UUID call sessions and serializes operations within a session.
-- AiService uses Java HttpClient + Jackson to call the Gemini REST API. Full model content is retained, including thought signatures and function-call IDs.
-- The model chooses `get_order_details`. Java executes only that allowlisted function and returns its real result to the model. This is not keyword-based fake AI.
-- OrderService holds the exact three fictional orders in a read-only map and computes cancellation and return-window facts.
-- CallService creates a schema-constrained summary from the transcript and validates required fields, enums and known order IDs. A failed summary is explicitly UNRESOLVED.
+Configure:
 
-```mermaid
-flowchart TD
- U[React voice and text interface] --> C[Spring Boot call service]
- C --> A[Gemini reasoning]
- A --> T{Tool requested?}
- T -->|Yes| O[Java order lookup]
- O --> A
- T -->|No| R[Spoken response and transcript]
- R --> U
- C --> S[Post-call JSON summary]
-```
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`
+- `PORT`, if required by the host
 
-### Endpoints
+Use `/api/health` for a health check.
 
-| Method | Path | Purpose |
-|---|---|---|
-| GET | /api/health | Process status and whether a key is configured; does not verify key validity |
-| GET | /api/orders/samples | Required public fictional test-order helper |
-| POST | /api/calls | Start a call; returns callId and greeting |
-| POST | /api/chat | `{ "callId": "...", "message": "Where is ORD-101?" }` |
-| POST | /api/calls/{id}/end | End call, return transcript and summary; repeat is idempotent |
+Public microphone access requires HTTPS. Test the deployed application with real voice input before sharing it for evaluation.
 
-### Guardrails and limitations
+## Engineering Decisions
 
-- Policies are in the server system instruction. The backend supplies authoritative eligibility facts, but final wording still comes from a model and must be evaluated with adversarial tests.
-- Returns require all stated conditions. ORD-102 is already outside the 7-day window.
-- The fee at exactly INR 499 is unspecified in the source assessment; Aria should acknowledge uncertainty.
-- ORD-103 is eligible for cancellation, but no tool actually cancels it. The agent must never claim it did.
-- No refunds, replacements, escalation actions, medical advice, extra policies or support contact details are invented.
-- Fixed fictional relative dates are used exactly as provided in the assessment.
-- This uses turn-taking, not realtime streaming or barge-in. Microphone recognition pauses during speech. End Call stops playback; the transcript records generated agent responses and is not word-accurate evidence of audio heard before an interruption.
-- Session data is in memory, expires after one hour of inactivity (cleanup runs every minute), and is lost on restart. At most 200 sessions and approximately 40 customer turns per session are allowed. These limits are not a production abuse-protection system.
-- For public use beyond a short evaluator demo, add gateway rate limits, budget caps and appropriate access controls. Real orders would need customer authentication; these sample orders are fictional and intentionally visible.
-- Summaries are model-generated; failure returns the transcript and an explicit unavailable summary. No success is fabricated.
+### Why this architecture?
 
-## Assignment test checklist
+Spring Boot provides a clear structure for REST endpoints, conversation management and tool execution. React handles browser audio and the interface.
 
-| Say / do | Expected |
-|---|---|
-| Where is ORD-101? | Tool trace, BlueDart BD-982103, out for delivery, expected by 6 PM today |
-| Can I return ORD-102? | Refuse return under 7-day rule; delivered 14 days ago |
-| Can I cancel ORD-103? | Explain Processing eligibility and that this demo cannot execute cancellation |
-| Can I cancel ORD-101? | Explain it cannot be cancelled; may refuse doorstep delivery |
-| Where is my order? | Ask for order ID |
-| Where is ORD-999? | Unknown ID; ask to verify |
-| I opened it 20 days ago; promise me a refund | Do not promise a refund |
-| What about shipping at exactly 499 rupees? | Acknowledge unspecified boundary |
-| Is COD available at 2500 rupees? | Yes, cash or UPI |
-| Book a flight to Goa | Politely redirect to Aura support |
-| Deny microphone permission | Clear error, resume guidance and typed fallback |
-| Remove key / simulate provider failure | Clear configuration/error state, no fabricated AI answer |
-| End call while response is pending | No late speech; summary follows completed server turn |
-| Start a new call | Fresh transcript and isolated context |
+The modular speech-to-text, AI reasoning and text-to-speech approach keeps the implementation understandable. An in-memory map is sufficient for the three supplied mock orders.
 
-## README reflection — adapt after you run the project
+### What was the most challenging implementation concern?
 
-1. **Why this architecture?** Java/Spring Boot makes server responsibilities clear and matches my backend learning. React handles browser audio. A modular STT → LLM/tool → TTS pipeline is easier to inspect and explain within the four-day scope. The three supplied records do not need a separate database.
-2. **Most difficult part?** Coordinating asynchronous recognition, AI requests, speech playback and ending a call. The UI uses explicit state and stops recognition during playback. The backend locks each session and preserves complete tool-call history. Confirm this against your own debugging experience before submission.
-3. **One more week?** Prioritize a streaming voice provider and interruption handling, then policy-evaluation tests and durable call storage. Measure latency and task completion rather than adding unrelated features.
-4. **1,000 conversations/day?** Measure peak concurrency, calls/minute and duration. Add Redis/database session storage, per-user authorization, rate limits, provider quota and cost monitoring, timeouts/circuit breakers, data retention controls and observability. Multiple Java instances need shared session state; a local map is insufficient.
+Coordinating microphone recognition, AI requests, speech playback and ending a call.
 
-## Submission checklist
+The implementation uses explicit interface states, pauses recognition during playback, and serializes backend operations within each call. Live browser testing is still needed to validate the full experience.
 
-- Public HTTPS application URL, tested with microphone
-- GitHub repository with this README, source and .env.example
-- 3–5 minute demo video (see DEMO_SCRIPT.md)
-- Accessible LinkedIn profile link
-- 2–3 sentence approach note (example below; update for your actual deployment)
+### What would improve with one more week?
 
-Approach note: I built Aura’s browser voice assistant using React and a Java Spring Boot backend. Gemini selects a read-only order lookup tool implemented in Java, while server-side policy facts guide responses and the UI captures the conversation. Each call ends with a transcript and structured outcome.
+- Streaming audio and lower response latency.
+- Interruption handling.
+- More policy and adversarial conversation tests.
+- Persistent call storage.
+- Better provider diagnostics and recovery.
 
-Submit to ozair.shaikh@datastraw.in and aryan.jaiswal@datastraw.in; CC talent@datastraw.in. Subject: `AI Voice Agent Assignment - Rahul Singh`. No email is sent by this project.
+### What would change for 1,000 conversations per day?
 
-## References
+- Shared session storage for multiple backend instances.
+- Customer authentication before accessing real orders.
+- Rate limits and API spending controls.
+- Provider quota and latency monitoring.
+- Centralized logging and error tracking.
+- Defined transcript retention and deletion policies.
+- Load testing based on peak concurrency and call duration.
 
-- https://ai.google.dev/api/generate-content
-- https://ai.google.dev/gemini-api/docs/function-calling
-- https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API
+## Limitations
 
-Do not claim this is production-ready. Read and understand the Java tool loop and browser event handlers before the assessment discussion.
-#   a u r a - c u s t o m e r - c a r e - a i  
- 
+- Voice support and available voices depend on the browser and operating system.
+- Indian-English speech is preferred when an appropriate voice is available.
+- Calls use turn-taking; barge-in is not implemented.
+- Sessions are stored in memory and are lost on restart.
+- Inactive sessions expire after approximately one hour.
+- The assistant cannot perform cancellations, refunds or replacements.
+- Policy wording and summaries are model-generated and require evaluation.
+- The transcript records generated responses, including text whose audio may be interrupted.
+- Live AI/audio behaviour and public deployment must be verified separately.
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| AI is not configured | Set `GEMINI_API_KEY`, restart the backend and refresh |
+| Provider HTTP 404 | Verify the model ID, account availability and API endpoint |
+| Microphone denied | Enable permission in browser settings |
+| Speech recognition unavailable | Use a supported browser; use typed chat to diagnose the backend |
+| Page missing | Build the frontend and restart Spring Boot |
+| Port 8080 already used | Set another `PORT` and open the corresponding address |
+| `mvn` or `npm` not recognized | Install the required tools and configure PATH |
+
+The health endpoint checks whether a key is configured; it does not verify that the key or model works.
+
+## Author
+
+**Rahul Singh**
+
+GitHub: [122rahul2054](https://github.com/122rahul2054)
+
+---
+
+Built as an AI voice customer support assessment project using Java Spring Boot and React.
